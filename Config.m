@@ -11,7 +11,7 @@
 
 #import <SSKeychain.h>
 
-NSString * const kService = @"OSChina";
+NSString * const kService = @"qunxin";
 NSString * const kAccount = @"account";
 NSString * const kUserID = @"userID";
 

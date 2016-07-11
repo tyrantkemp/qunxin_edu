@@ -91,10 +91,13 @@
         }else {
              NSArray* arr = (NSArray*)json[@"data"];
              _leftArr = [CourseSeries mj_objectArrayWithKeyValuesArray:arr];
-              dispatch_async(dispatch_get_main_queue(), ^{
+            
+            kDISPATCH_MAIN_THREAD(^{
                 [weakself.leftTableView reloadData];
-
             });
+//            dispatch_async(dispatch_get_main_queue(), ^{
+//
+//            });
         }
     } failure:^(NSError *error) {
         [Utils createHUDErrorWithError:error];

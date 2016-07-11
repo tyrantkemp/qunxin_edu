@@ -22,6 +22,6 @@
 #import "BlocksKit.h"
 #import "BlocksKit+UIKit.h"
 
-
+#import <tingyunApp/NBSAppAgent.h>
 #import "Config.h"
 #endif /* PrefixHeader_pch */

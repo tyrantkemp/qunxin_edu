@@ -7,7 +7,7 @@
 //
 
 #import "CorporationTableViewController.h"
-#import "Corporation.h"
+#import "corporationMJ.h"
 #import "corporationcell.h"
 #import "CorInfoViewController.h"
 
@@ -28,7 +28,7 @@ static NSString * cellId = @"corporationcell";
         __weak CorporationTableViewController * corpctl = self;
         
         self.generateURL = ^NSString*(NSUInteger page){
-            NSString* url =[NSString stringWithFormat:@"%@%@?pageIndex=%lu&%@", MAIN_PREFIX, MAIN_CORPORATION, (unsigned long)page, MAIN_SUFFIX];
+            NSString* url =[NSString stringWithFormat:@"%@%@%@?pageIndex=%lu&%@", MAIN, MAIN_CORPORATION,GET_CORP, (unsigned long)page, MAIN_SUFFIX];
             NSLog(@"url:%@",url);
            return url;
             
@@ -38,7 +38,7 @@ static NSString * cellId = @"corporationcell";
             ((count < 20)?(corpctl.lastCell.status =LastCellStatusFinished):(corpctl.lastCell.status = LastCellStatusMore));
         };
         
-        self.objClass = [Corporation class];
+        self.objClass = [corporationMJ class];
         
         self.needAutoRefresh = YES;
         self.refreshInterval = 21600;
@@ -67,7 +67,7 @@ static NSString * cellId = @"corporationcell";
     
     UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:cellId];
     
-    Corporation* cor = self.objects[indexPath.row];
+    corporationMJ* cor = self.objects[indexPath.row];
     cell.textLabel.text = cor.corName;
     [cell.imageView loadPortrait:[NSURL URLWithString:cor.iconUrl]];
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@:%d",@"热招岗位数",cor.jobNumber];
@@ -99,8 +99,10 @@ static NSString * cellId = @"corporationcell";
 
 
 -(NSArray*)parseJson:(id)responseObject{
-    NSArray *json = [NSJSONSerialization JSONObjectWithData:responseObject options:0 error:nil];
+    NSArray *jsonarr = [NSJSONSerialization JSONObjectWithData:responseObject options:0 error:nil];
 
+    NSArray* res =[corporationMJ mj_objectArrayWithKeyValuesArray:jsonarr];
+    
   // NSArray * arr = responseObject;
    //NSArray *arr =  [NSKeyedUnarchiver unarchiveObjectWithData:responseObject];
 //    RLMRealm * reaml =[RLMRealm defaultRealm];
@@ -111,7 +113,7 @@ static NSString * cellId = @"corporationcell";
 //    return res;
 //    
 
-    return nil;
+    return res;
 }
 
 @end

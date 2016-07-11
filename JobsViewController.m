@@ -46,7 +46,7 @@ static NSString* cellId = @"jobcell";
         
          NSString* url = [NSString stringWithFormat:@"%@%@?pageIndex=%lu&%@", MAIN_PREFIX, MAIN_CORPORATION, (unsigned long)page, MAIN_SUFFIX];
             NSLog(@"获取工作信息url:");
-            return url;
+            return @"http://www.baidu.com";
         };
         
         self.tableWillReload = ^(NSUInteger count){
@@ -59,8 +59,6 @@ static NSString* cellId = @"jobcell";
         self.needAutoRefresh = NO;
         //self.refreshInterval = 21600;
         //self.kLastRefreshTime = @"jobsRefreshInterval";
-        
-        
         
     }
     return self;
@@ -77,10 +75,7 @@ static NSString* cellId = @"jobcell";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
     [self.tableView registerClass:[CorInfoTableViewCell class] forCellReuseIdentifier:cellId];
-    
-    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -97,10 +92,8 @@ static NSString* cellId = @"jobcell";
     cell.jobindexLabel.text = [NSString stringWithFormat:@"职位%d",indexPath.row];
     cell.salaryLabel.text  = [NSString stringWithFormat:@"￥%dK-%dK",5,10];
     cell.subInfoLabel.text  = [NSString stringWithFormat:@"%@ %@年 %@",@"广州",@"3-5",@"本科"];
-    
     cell.jobNameLabel.text = @"CEO";
     cell.corNameLabel.text = @"百度";
-    
     cell.updateLabel.text =@"跟新日期:2016-06-12";
     
     return cell;

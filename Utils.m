@@ -332,9 +332,26 @@
     [HUD hide:YES afterDelay:3];
     HUD.removeFromSuperViewOnHide = YES;
     //[HUD addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:HUD action:@selector(hide:)]];
-    
     return HUD;
 }
+
++ (MBProgressHUD *)createHUDErrorWithErrorMessage:(NSString*)message delay:(NSTimeInterval)delay
+{
+    UIWindow *window = [[UIApplication sharedApplication].windows lastObject];
+    MBProgressHUD *HUD = [[MBProgressHUD alloc] initWithWindow:window];
+    HUD.detailsLabelFont = [UIFont boldSystemFontOfSize:16];
+    HUD.mode = MBProgressHUDModeCustomView;
+    HUD.customView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"HUD-error"]];
+    
+    HUD.labelText = message;
+    HUD.userInteractionEnabled=YES;
+    [window addSubview:HUD];
+    [HUD hide:YES afterDelay:delay];
+    HUD.removeFromSuperViewOnHide = YES;
+    //[HUD addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:HUD action:@selector(hide:)]];
+    return HUD;
+}
+
 
 + (UIImage *)createQRCodeFromString:(NSString *)string
 {
@@ -389,15 +406,12 @@
 
 #pragma mark - 判断是否是手机号
 +(BOOL)isPhoneNumber:(UITextField*)textfield Range:(NSRange)range String:(NSString*)string{
-    
-    
     NSString *text = [textfield text];
     NSCharacterSet *characterSet = [NSCharacterSet characterSetWithCharactersInString:@"0123456789\b"];
     string = [string stringByReplacingOccurrencesOfString:@" " withString:@""];
     if ([string rangeOfCharacterFromSet:[characterSet invertedSet]].location != NSNotFound) {
         return NO;
     }
-    
     text = [text stringByReplacingCharactersInRange:range withString:string];
     text = [text stringByReplacingOccurrencesOfString:@" " withString:@""];
     
@@ -441,12 +455,16 @@
 
 +(id)getJsonStringFromResponseObj:(id)responseObj{
     NSString *responseString = [[NSString alloc] initWithData:responseObj encoding:NSUTF8StringEncoding];
-    responseString = [responseString stringByReplacingOccurrencesOfString:@"\\" withString:@""];
-    responseString = [responseString substringWithRange:NSMakeRange(1, [responseString length]-2)];
+    //responseString = [responseString stringByReplacingOccurrencesOfString:@"\\" withString:@""];
+    //responseString = [responseString substringWithRange:NSMakeRange(1, [responseString length]-2)];
     id json = [NSJSONSerialization JSONObjectWithData:[responseString dataUsingEncoding:NSUTF8StringEncoding]options:NSJSONReadingMutableContainers error:nil];
     return json;
 }
 
-
++(BOOL)isValidateEmail:(NSString *)email {
+    NSString *emailRegex = @"[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}";
+    NSPredicate *emailTest = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", emailRegex];
+    return [emailTest evaluateWithObject:email];
+}
 
 @end

@@ -10,6 +10,8 @@
 #import <SMS_SDK/SMSSDK.h>
 #import "UserInfoViewController.h"
 #import "NSString+Util.h"
+#import "MBProgressHUD.h"
+
 @interface RegisterViewController ()<UITextFieldDelegate,UIGestureRecognizerDelegate,UIAlertViewDelegate>{
     
   
@@ -38,6 +40,8 @@
     //倒计时
     NSTimer* _timer;
     NSInteger _totaltime;
+    
+    MBProgressHUD* _hud;
 }
 
 @end
@@ -336,11 +340,6 @@
     _totaltime = 60;
     _timer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(smsTime:) userInfo:nil repeats:YES];
     
-    
-    
-    
-    
-    
     [SMSSDK getVerificationCodeByMethod:SMSGetCodeMethodSMS phoneNumber:_phoneTF.text zone:@"86" customIdentifier:nil result:^(NSError *error) {
         if (!error) {
             NSLog(@"获取验证码成功");
@@ -382,7 +381,6 @@
     NSLog(@"邮箱注册提交");
     if([_mailTF.text isNullOrEmpty] || [_mailaccountTF.text isNullOrEmpty]|| [_mailpwdTF.text isNullOrEmpty]){
         UIAlertView* alert = [UIAlertView bk_showAlertViewWithTitle:@"错误" message:@"必填项不能为空" cancelButtonTitle:@"OK" otherButtonTitles:nil handler:^(UIAlertView *alertView, NSInteger buttonIndex) {
-            
         }];
         alert.delegate =self;
         [alert show];
@@ -390,69 +388,89 @@
     }
     
     
+    NSString* mail = [_mailTF.text StringWithoutEmpty];
+    NSString* username = [_mailaccountTF.text StringWithoutEmpty];
+    NSString* password = [[_mailpwdTF.text StringWithoutEmpty]md5Checksum];
     
-//    if(_type == 0){
-//        
-//        NSLog(@"短信注册");
-//        [SMSSDK commitVerificationCode:_smsTF.text phoneNumber:_phoneTF.text zone:@"86" result:^(NSError *error) {
-//            if (/* DISABLES CODE */ (YES)) {
-//                NSLog(@"验证成功");
-//                [self releaseTImer];
-//                UIAlertView* okalert = [UIAlertView bk_showAlertViewWithTitle:nil message:@"验证成功" cancelButtonTitle:@"确认" otherButtonTitles:nil handler:^(UIAlertView *alertView, NSInteger buttonIndex) {
-//                    if(buttonIndex == 0){
-//                        NSLog(@"确定 -- 进入下个页面");
-//                        
-//                        UserInfoViewController* userinfoCtl = [UserInfoViewController new];
-//                        
-//                        userinfoCtl.hidesBottomBarWhenPushed = YES;
-//                        //[self.navigationController presentedViewController:userinfoCtl animated:YES];
-//                        [self presentViewController:userinfoCtl animated:YES completion:^{
-//                            
-//                        }];
-//                        
-//                        
-//                    }
-//                    
-//                }];
-//                [okalert show];
-//                
-//            }
-//            else
-//            {
-//                NSLog(@"错误信息:%@",error);
-//                UIAlertView* erroralert = [UIAlertView bk_showAlertViewWithTitle:@"验证失败" message:(error.userInfo)[@"commitVerificationCode"] cancelButtonTitle:@"确认" otherButtonTitles:nil handler:^(UIAlertView *alertView, NSInteger buttonIndex) {
-//                    if(buttonIndex == 0){
-//                        NSLog(@"验证失败 ");
-//                    }
-//                    
-//                }];
-//                [erroralert show];
-//                
-//            }
-//        }];
-//    }else if(_type == 1){
-//        NSLog(@"邮箱注册");
-//        
-//    }
+    //邮箱格式验证
+    if(![Utils isValidateEmail:mail]){
+        UIAlertView* alert = [UIAlertView bk_showAlertViewWithTitle:nil message:@"邮箱格式错误" cancelButtonTitle:@"重新输入" otherButtonTitles:nil handler:^(UIAlertView *alertView, NSInteger buttonIndex) {
+            
+        }];
+        alert.delegate =self;
+        [alert show];
+        return;
+    }
+    
+    _hud = [Utils createHUD];
+    _hud.labelText = @"正在注册";
+    
+    [_hud show:YES];
+    _hud.userInteractionEnabled = NO;
+    
+    NSLog(@"login url:%@",[NSString stringWithFormat:@"%@%@%@",MAIN,AUTH,APP_LOGIN]);
     
     
-    
+    [[XZHttp sharedInstance ] postWithURLString:[NSString stringWithFormat:@"%@%@%@",MAIN,AUTH,APP_REGISTER] parameters:@{@"username":username, @"password":password,@"email":mail} success:^(id responseObject) {
+        
+        NSDictionary* data = [NSJSONSerialization JSONObjectWithData:responseObject options:0 error:nil];
+        NSInteger isSuccess = [(NSString*)data[@"isSuccess"] integerValue];
+        // 注册失败 isSuccess == 0
+        if(isSuccess != 1){
+            NSString* errMeesage = data[@"message"];
+            _hud.detailsLabelFont = [UIFont boldSystemFontOfSize:16];
+            _hud.mode = MBProgressHUDModeCustomView;
+            _hud.customView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"HUD-error"]];
+            _hud.labelText = errMeesage;
+            [_hud hide:YES afterDelay:2];
+            return;
+        }
+        _hud.mode = MBProgressHUDModeText;
+        _hud.labelText = @"注册成功";
+        [_hud hide:YES afterDelay:2];
+        _hud.userInteractionEnabled = NO;
+        //登陆成功后返回上一页
+        dispatch_after (dispatch_time (DISPATCH_TIME_NOW, (int64_t )(2 * NSEC_PER_SEC )), dispatch_get_main_queue (), ^{
+            [self.navigationController popViewControllerAnimated:NO];
+            [[NSNotificationCenter defaultCenter]postNotificationName:QUIT_REGISTER_TO_SETTING object:nil];
+            
+        });
+        //获取并保存个人资料
+        //NSDictionary* user = data[@"user"];
+        // [self renewUser:user];
+    } failure:^(NSError *error) {
+        [Utils createHUDErrorWithError:error];
+        
+    }];
     
 }
-
+#pragma mark - 跟新本地用户信息
+-(void)renewUser:(NSDictionary*) userdict{
+    //userDefault 保存 登陆用户信息
+    [self saveCookies];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"userRefresh" object:@(YES)];
+    
+}
+- (void)saveCookies
+{
+    NSData *cookiesData = [NSKeyedArchiver archivedDataWithRootObject: [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies]];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject: cookiesData forKey: @"sessionCookies"];
+    [defaults synchronize];
+    
+}
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
 
 
-#pragma mark - 判断是否是手机号
+#pragma mark - 判断是否是手机号 邮箱格式
 -(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
     
     if(textField != _phoneTF){
         return YES;
     }
-    
     return [Utils isPhoneNumber:textField Range:range String:string];
     
 }

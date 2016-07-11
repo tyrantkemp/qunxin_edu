@@ -72,7 +72,7 @@
         
     }else if(indexPath.section==2){
         cell= [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"settings_cell_section_2"];
-        cell.textLabel.text=@[@"维护人员电话:13302332014",@"意见反馈",@"社交分享",@"关于全明星学院"][indexPath.row];
+        cell.textLabel.text=@[@"维护人员电话:13302332014",@"意见反馈",@"社交分享",@"关于前星学院"][indexPath.row];
         cell.imageView.image =[UIImage imageNamed:@[@"tel",@"feedback",@"icon_share",@"about"][indexPath.row] ];
         
     }

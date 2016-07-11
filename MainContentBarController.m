@@ -80,11 +80,13 @@
     //tab
     self.viewControllers =@[
                             coursenav,
+                            cornav,
+                            jobnav,
                             vipnav,
-                           settingsNav
+                            settingsNav
                             ];
-    NSArray* titles = @[@"培训",@"会员",@"设置"];
-    NSArray* images = @[@"video_1",@"vip",@"icon_setting_normal"
+    NSArray* titles = @[@"培训",@"公司",@"职位",@"会员",@"设置"];
+    NSArray* images = @[@"video_1",@"cor",@"job",@"vip",@"icon_setting_normal"
                         ];
     
     [self.tabBar.items enumerateObjectsUsingBlock:^(UITabBarItem * _Nonnull item, NSUInteger idx, BOOL * _Nonnull stop) {

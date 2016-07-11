@@ -62,6 +62,9 @@
     AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
     appDelegate.loginDelegate = self;
     
+    
+    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(quitLoginView) name:QUIT_REGISTER_TO_SETTING object:nil];
+    
 //    RACSignal *valid = [RACSignal combineLatest:@[_accountField.rac_textSignal, _passwordField.rac_textSignal]
 //                                         reduce:^(NSString *account, NSString *password) {
 //                                             return @(account.length > 0 && password.length > 0);
@@ -77,6 +80,10 @@
     //    if (![WXApi isWXAppInstalled]) {
     //        _wechatBtn.hidden = YES;
     //    }
+}
+
+-(void)quitLoginView{
+    [self.navigationController popViewControllerAnimated:YES];
 }
 -(void)regist{
     NSLog(@"注册");
@@ -111,7 +118,7 @@
     [_usernameTF setClearButtonMode:UITextFieldViewModeWhileEditing];
     [_usernameTF setEnablesReturnKeyAutomatically:YES];
     _usernameTF.delegate = self;
-    [_usernameTF setPlaceholder:@"Account"];
+    [_usernameTF setPlaceholder:@"用户名/邮箱"];
     [_usernameTF setFont:[UIFont systemFontOfSize:16]];
     [_usernameTF setTextColor:[UIColor colorWithRed:0.078 green:0.208 blue:0.422 alpha:1.000]];
     
@@ -126,7 +133,7 @@
     [_PasswordTF setClearButtonMode:UITextFieldViewModeWhileEditing];
     [_PasswordTF setEnablesReturnKeyAutomatically:YES];
     _PasswordTF.delegate = self;
-    [_PasswordTF setPlaceholder:@"Password"];
+    [_PasswordTF setPlaceholder:@"密码"];
     [_PasswordTF setFont:[UIFont systemFontOfSize:16]];
     [_PasswordTF setTextColor:[UIColor colorWithRed:0.078 green:0.208 blue:0.422 alpha:1.000]];
     [_PasswordTF setSecureTextEntry:YES];
@@ -346,47 +353,51 @@
     _hud = [Utils createHUD];
     _hud.labelText = @"正在登录";
     
-    [_hud hide:YES afterDelay:10];
+    [_hud show:YES];
     _hud.userInteractionEnabled = NO;
 
 
+    //用户名过滤掉空格 密码过滤空格MD5加密
+    NSString* account = [_usernameTF.text StringWithoutEmpty];
+    NSString * md5pwd = [[_PasswordTF.text StringWithoutEmpty] md5Checksum];
     
-    [[XZHttp sharedInstance ] postWithURLString:[NSString stringWithFormat:@"%@%@",MAIN_PREFIX,LOGIN] parameters:@{@"username" : _usernameTF.text, @"pwd" : _PasswordTF.text, @"keep_login" : @(1)} success:^(id responseObject) {
+    
+    //失败：{"data":null,"errorCode":null,"isSuccess":false,"message":"账户名称或者密码不匹配","pager":null}
+    NSLog(@"login url:%@",[NSString stringWithFormat:@"%@%@%@",MAIN,AUTH,APP_LOGIN]);
+
+    
+    [[XZHttp sharedInstance ] postWithURLString:[NSString stringWithFormat:@"%@%@%@",MAIN,AUTH,APP_LOGIN] parameters:@{@"username":account, @"password":md5pwd} success:^(id responseObject) {
+        
         
         NSDictionary* data = [NSJSONSerialization JSONObjectWithData:responseObject options:0 error:nil];
-        NSDictionary* result = data[@"result"];
+        NSInteger isSuccess = [(NSString*)data[@"isSuccess"] integerValue];
         
-         NSInteger rescode = [result[@"errorCode"] integerValue];
-        
-        
-        // 登陆失败 errorCode == 0
-        if(!rescode){
-            NSString* errMeesage = result[@"errorMessage"];
-            
-            _hud.mode= MBProgressHUDModeCustomView;
+        // 登陆失败 isSuccess == 0
+        if(isSuccess != 1){
+            NSString* errMeesage = data[@"message"];
+            _hud.detailsLabelFont = [UIFont boldSystemFontOfSize:16];
+            _hud.mode = MBProgressHUDModeCustomView;
             _hud.customView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"HUD-error"]];
-
-            _hud.labelText  = [NSString stringWithFormat:@"错误:%@",errMeesage];
-            [_hud hide:YES afterDelay:1];
-            return;
-            
-            
+            _hud.labelText = errMeesage;            
+            [_hud hide:YES afterDelay:2];
+             return;
         }
         
-        //登陆成功
+        //登陆成功后保存用户名密码下次进入登录页面可默认显示
         [Config saveOwnAccount:_usernameTF.text andPassword:_PasswordTF.text];
-        NSDictionary* user = data[@"user"];
-    
-        [self renewUser:user];
+        //登陆成功后返回上一页
+        [self.navigationController popViewControllerAnimated:YES];
+
+        //获取并保存个人资料
+        //NSDictionary* user = data[@"user"];
+       // [self renewUser:user];
+        
+        
         
     } failure:^(NSError *error) {
-        _hud.mode = MBProgressHUDModeCustomView;
-        _hud.customView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"HUD-error"]];
-       // _hud.labelText = [@(operation.response.statusCode) stringValue];
-       // _hud.detailsLabelText = error.userInfo[NSLocalizedDescriptionKey];
-        _hud.labelText = error.userInfo[NSLocalizedDescriptionKey];
         
-        [_hud hide:YES afterDelay:1];
+        [Utils createHUDErrorWithError:error];
+     
     }];
     
     
@@ -428,9 +439,7 @@
     //userDefault 保存 登陆用户信息
     [self saveCookies];
     
-    
     [[NSNotificationCenter defaultCenter] postNotificationName:@"userRefresh" object:@(YES)];
-    [self.navigationController popViewControllerAnimated:YES];
     
 }
 - (void)saveCookies

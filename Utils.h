@@ -51,6 +51,8 @@ typedef NS_ENUM(NSUInteger, hudType) {
 + (MBProgressHUD *)createHUDWithText:(NSString*)text;
 + (MBProgressHUD *)createHUDWithText:(NSString*)text delayTime:(NSTimeInterval)delay;
 + (MBProgressHUD *)createHUDErrorWithError:(NSError*)error;
++ (MBProgressHUD *)createHUDErrorWithErrorMessage:(NSString*)message delay:(NSTimeInterval)delay;
+
 
 + (UIImage *)createQRCodeFromString:(NSString *)string;
 + (NSAttributedString *)attributedTimeString:(NSDate *)date;
@@ -67,6 +69,7 @@ typedef NS_ENUM(NSUInteger, hudType) {
 //将responseobj 转化为json
 +(id)getJsonStringFromResponseObj:(id)responseObj;
 
-
+//判断邮箱格式是否正确
++(BOOL)isValidateEmail:(NSString *)email;
 
 @end

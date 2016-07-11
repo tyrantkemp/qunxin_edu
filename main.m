@@ -11,7 +11,8 @@
 
 int main(int argc, char * argv[]) {
     @autoreleasepool {
-
+        //听云 监控
+        [NBSAppAgent startWithAppID:@"acbdfc7ebdc64ff3ac4eb15111e35a8a"];
         return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
     }
 }
