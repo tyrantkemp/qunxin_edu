@@ -77,6 +77,8 @@
     UIStoryboard * settingSB = [UIStoryboard storyboardWithName:@"Settings" bundle:nil];
     UINavigationController * settingsNav = [settingSB instantiateViewControllerWithIdentifier:@"nav"];
     
+    
+    
     //tab
     self.viewControllers =@[
                             coursenav,
@@ -91,11 +93,7 @@
     
     [self.tabBar.items enumerateObjectsUsingBlock:^(UITabBarItem * _Nonnull item, NSUInteger idx, BOOL * _Nonnull stop) {
         [item setTitle:titles[idx]];
-        
-
         [item setImage:[UIImage imageNamed:images[idx]]];
-        
-
         [item setSelectedImage:[UIImage imageNamed:[images[idx] stringByReplacingOccurrencesOfString:@"normal" withString:@"pressed"]]];
          
     }];
